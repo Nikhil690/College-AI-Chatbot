@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Chatbot</title>
+  <link rel="stylesheet" href="dist/style.css">
+  <style>
+    /* Inline CSS for quick styling */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    #chat-box {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f7f7f7;
+    }
+    #chat-box div {
+      margin: 5px 0;
+      padding: 5px 10px;
+    }
+    .user-message {
+      border: 1px solid #007bff;
+      border-radius: 5px;
+      text-align: right;
+      color: #007bff;
+    }
+    .bot-message {
+      border: 1px solid #28a745;
+      border-radius: 5px;
+      text-align: left;
+      color: #28a745;
+    }
+    .error-message {
+      border: 1px solid #dc3545;
+      border-radius: 5px;
+      color: #dc3545;
+    }
+    .generating-message {
+      animation: generating 0.5s ease-in-out infinite;
+    }
+    @keyframes generating {
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      width: 70%;
+      margin-right: 5px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .common-queries {
+      margin-top: 10px;
+    }
+    .query-button {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .query-button:hover {
+      background-color: #5a6268;
+    }
+    .chat-container {
+      margin-top: 20px;
+    }
+    #chat-box {
+      margin-top: 10px;
+    }
+    .common-queries {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h2>College Chatbot</h2>
+    <p>Ask your questions here and we'll try to answer them.</p>
+    <!-- Chat Box -->
+    <div id="chat-box"></div>
+
+    <!-- Input Field and Send Button -->
+    <div>
+      <input type="text" id="user-query" placeholder="Ask something..." onkeydown="if (event.keyCode == 13) document.getElementById('send-button').click()" />
+      <button id="send-button">Send</button>
+    </div>
+
+    <!-- Common Queries Buttons -->
+    <div class="common-queries" style="overflow-x: auto; white-space: nowrap;">
+      <button class="query-button" onclick="sendMessage('What are the college opening hours?')">Opening Hours</button>
+      <button class="query-button" onclick="sendMessage('What courses are available?')">Courses</button>
+      <button class="query-button" onclick="sendMessage('How to contact the administration?')">Contact Admin</button>
+      <button class="query-button" onclick="sendMessage('What facilities are available on campus?')">Campus Facilities</button>
+      <button class="query-button" onclick="sendMessage('How to apply for admission?')">Admission</button>
+      <button class="query-button" onclick="sendMessage('What is the procedure for applying for a scholarship?')">Scholarship</button>
+    </div>
+  </div>
+
+  <script src="dist/index.js"></script>
+  <script>
+    // Include the sendMessage function here if not already in index.js
+    function sendMessage(query) {
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML += `<div class="user-message">👨: ${query}</div>`; // Display user query
+      
+      const generatingMessage = document.createElement("div");
+      generatingMessage.classList.add("generating-message");
+      generatingMessage.innerHTML = "Generating response...";
+      chatBox.appendChild(generatingMessage);
+
+      fetch("http://127.0.0.1:8080/query", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query })
+      })
+      .then(response => response.json())
+      .then(data => {
+        generatingMessage.remove(); // Remove generating message
+        
+        // Type response letter by letter
+        const botMessage = document.createElement("div");
+        botMessage.classList.add("bot-message");
+        chatBox.appendChild(botMessage);
+        let response = data.response || "Sorry, I didn’t understand that.";
+        let i = 0;
+        const intervalId = setInterval(() => {
+          if (i === 0) {
+            botMessage.innerHTML = "🤖 : ";
+          }
+          if (i < response.length) {
+            botMessage.innerHTML += response.charAt(i);
+            i++;
+          } else {
+            clearInterval(intervalId);
+          }
+        }, 20);
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
+      })
+      .catch(error => {
+        chatBox.innerHTML += `<div class="error-message">Error: ${error.message}</div>`;
+      });
+    }
+  </script>
+</body>
+</html>
+
